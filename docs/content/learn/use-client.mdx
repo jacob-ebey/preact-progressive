@@ -1,0 +1,98 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# `use client`
+
+You will learn how to mark the boundary between server code and client code, and when to use each shape.
+
+Preact Progressive looks for `use client` directives to find that boundary. Everything outside the boundary runs once on the server. Everything inside the boundary also renders on the server for first paint, then hydrates in the browser so it can respond from then on.
+
+There are two shapes: module directives and scoped directives. Both are compiled by [babel-plugin-preact-progressive/server](/reference/babel/server). You will use module directives most of the time.
+
+## Use a module directive by default
+
+If a file is interactive, put `"use client"` at the top. Every export in that file becomes a client component.
+
+This is the safest setup. Server code cannot accidentally leak into your client bundle because the two live in different files. Chunks stay small and it is clear when each file loads.
+
+```tsx
+// counter.tsx
+"use client";
+
+import { useState } from "preact/hooks";
+
+export function Counter({ initial = 0 }) {
+  const [count, setCount] = useState(initial);
+
+  return (
+    <button type="button" onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+Now import it from any server component and pass it data that only exists on the server:
+
+```tsx
+// page.tsx
+import { Counter } from "./counter.tsx";
+
+export function Page() {
+  return (
+    <main>
+      <h1>Hello from the server</h1>
+      <Counter initial={countFromDatabase()} />
+    </main>
+  );
+}
+```
+
+`Page` never leaves the server. `Counter` renders there once for HTML, then hydrates in the browser. That split is all you need for most interactive UI.
+
+## Use a scoped directive to keep a small island in place
+
+Sometimes moving a whole file feels heavy. Maybe you have one small counter inside a large server module. In that case, you can mark a single function instead:
+
+```tsx
+// ... module containing other server code
+
+export function InlineCounter({ initial }) {
+  "use client";
+
+  const [count, setCount] = useState(initial);
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+This works, but it asks more from you. You need to check that no server code sneaks into the client bundle through imports or outer variables. If you are not sure, prefer the module directive. Separate files make the boundary visible.
+
+## Use a scoped handler when you only need one listener
+
+You can scope even tighter, down to a single event handler:
+
+```tsx
+export function ServerComponent({ message }) {
+  const handleClick = () => {
+    "use client";
+
+    alert(message);
+  };
+  return <button onClick={handleClick}>Do Alert</button>;
+}
+```
+
+Here only `handleClick` ships to the browser. There is no component and no hydration. The outer `message` value is captured from the server scope and bound to the handler on the client.
+
+This is the cheapest interactivity you can add, but it has the narrowest rules for what you can capture. Only take values you mean to send, and keep them serializable. Read [Props](/learn/props) and [Events](/learn/events) to see exactly what is allowed.
+
+## How to choose
+
+If you remember one thing, remember this:
+
+* Need state or a full component? Use a module directive. Put it in its own file.
+* Need a small island next to server code? Use a scoped component directive, and double check your imports.
+* Need only a click or a log on static markup? Use a scoped handler.
+
+Next, read [Islands](/learn/islands) to see how each top level boundary hydrates on its own.

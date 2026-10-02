@@ -1,0 +1,81 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Routing and Navigation
+
+You will learn how client navigation works, how to set it up, and what happens when you click a link.
+
+Client navigation upgrades normal links. The `Router` catches navigations inside your app and asks the server for just the page content, without the document shell around it. It swaps that content in. The document never reloads.
+
+The result feels instant. State in the mounted tree survives. Scroll and focus behave like you expect from client routing, but every page still has a real URL and real server HTML on first load.
+
+## Set it up
+
+You need two pieces: the client `Router` and a server that can answer content only responses.
+
+1. Wrap the shell in the client `Router`:
+
+   ```tsx
+   import { Router } from "preact-progressive/router";
+
+   <html lang="en">
+     <body>
+       <Router>{children}</Router>
+     </body>
+   </html>;
+   ```
+
+   Render it inside the document shell so full loads and navigations share one tree.
+
+2. Answer navigation requests with content only responses. Use the Hono middleware described in [Serving with Hono](/learn/hono):
+
+   ```tsx
+   app.use(
+     dynamicDataResponses(),
+     preactRenderer(({ children }) => <Shell>{children}</Shell>),
+   );
+   ```
+
+3. Skip the document wrapper for those responses. Nesting a second `<html>` inside a navigation response breaks the replacement:
+
+   ```tsx
+   function Shell({ children }) {
+     const c = useRequestContext();
+     if (c.get("dataResponse")) return children;
+     return (
+       <html lang="en">
+         <body>
+           <Router>{children}</Router>
+         </body>
+       </html>
+     );
+   }
+   ```
+
+## What happens when you click
+
+Here is the sequence, slowed down:
+
+1. You click a same document link. The `Router` intercepts the Navigation API `navigate` event.
+2. It fetches the destination with an `Accept: text/x-component` header, so the server knows to send page content instead of a full document.
+3. The payload streams into state as it arrives. First paint lands before the stream closes. Later updates like resolved promises slot in afterwards.
+4. The output sits in a `Suspense` boundary. Preact reconciles each payload against the mounted tree, so component instances and their state survive the swap.
+
+Not every navigation goes through the router. Hash only changes, downloads, and form submissions fall through to the browser default handling, as does anything the router cannot intercept. Those become normal full page loads.
+
+Cache behavior follows the navigation kind. Back and forward traversals reuse the cache (`force-cache`). Reloads bypass it (`reload`). New push and replace navigations use the default behavior.
+
+If a fetch is aborted because a newer navigation replaced it, that failure is silent. Interruption is expected traffic. Anything else logs to `console.error`.
+
+## Customize the fetch
+
+`Router` takes a `fetch` prop for tests and request prefixing:
+
+```tsx
+<Router fetch={(req) => fetch(req)}>...</Router>
+```
+
+It receives a `Request` built from the destination URL with the navigation headers, an abort signal, and the cache mode above. It returns the content only `Response` the server sent.
+
+Header and streaming details live in [preact-progressive/router](/reference/preact-progressive/router). For the server half, read [Serving with Hono](/learn/hono).

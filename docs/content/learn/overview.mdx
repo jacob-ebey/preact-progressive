@@ -1,0 +1,39 @@
+# Overview
+
+You will learn how Preact Progressive thinks about your app.
+
+Every request starts on the server. Your components run there and return HTML. The browser shows that HTML right away. Then it hydrates only the parts you marked interactive. Everything else ships zero JavaScript.
+
+That idea sounds simple, but it changes how you build. Once you see where code runs, the rest falls into place.
+
+## How to think about your app
+
+Think of your page in two parts.
+
+First, the static part. This is most of your page. It runs once per request on the server and produces HTML. You can read headers, query your database, and await data directly. You never worry about bundle size here because no code leaves the server.
+
+Second, the interactive part. This is the small set of places where the page needs to respond, remember state, or listen for input. You mark those places with [`use client`](/learn/use-client). Each one becomes an [island](/learn/islands) that wakes up in the browser.
+
+Data flows from the first part to the second part through [props](/learn/props). Sometimes you do not need a full component at all. A single [event handler](/learn/events) can add a click or a log line for the cost of a tiny script.
+
+## Where to start
+
+If you like reading concepts first, go in this order:
+
+1. Start with [Server Components](/learn/server-components). They are the default, so learn what you get for free.
+2. Read [`use client`](/learn/use-client) to see where interactivity begins and how to mark it.
+3. Read [Islands](/learn/islands) to understand how those boundaries hydrate on their own.
+4. Read [Props Across the Boundary](/learn/props) to see what data you can pass from server to client.
+5. Read [Events](/learn/events) when a full component feels like too much.
+
+Then read the two pages about timing and movement:
+
+- [Streaming and Suspense](/learn/streaming) shows how the page paints in pieces instead of all at once.
+- [Routing](/learn/routing) shows how link clicks fetch only page content, without a full reload.
+- [Serving with Hono](/learn/hono) ties it together with the two middleware that make both responses work.
+
+## If you learn by doing
+
+Skip ahead to the [Guide](/guide/01-server-components). You will build the same ideas step by step: a server page, an island, props, an event, then streaming and promises.
+
+When you want exact APIs, check [preact-progressive/server](/reference/preact-progressive/server). When you want to know how the directives work under the hood, read [babel-plugin-preact-progressive/server](/reference/babel/server).

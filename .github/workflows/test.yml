@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup vp
+        uses: voidzero-dev/setup-vp@v1.21.1
+        with:
+          node-version: "24"
+          cache: true
+          run-install: true
+
+      - name: Install Playwright browsers
+        run: pnpm dlx playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: vp run -r test

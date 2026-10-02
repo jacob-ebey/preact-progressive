@@ -1,0 +1,81 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Serving with Hono
+
+You will learn how to serve your app with Hono so the same route returns full HTML on first load and page content on client navigation.
+
+Hono is the recommended way to serve your app. Two middleware do the work. One detects navigation requests from the `Accept` header. The other renders your tree to the matching format. You write one route and get both representations.
+
+## Set it up
+
+Install the adapter alongside Hono, then wrap your app with both middleware:
+
+```tsx
+import { Hono } from "hono";
+import { dynamicDataResponses, preactRenderer } from "hono-preact-progressive";
+
+const app = new Hono();
+
+app.use(
+  dynamicDataResponses(),
+  preactRenderer(({ children }) => <Shell>{children}</Shell>),
+);
+
+app.get("/", (c) => c.render(<main>Hello from the server</main>));
+```
+
+Order matters. Put `dynamicDataResponses()` first so the renderer sees the request type in time. Every handler after that can call `c.render()` and return the response straight away.
+
+## Render pages with `c.render()`
+
+Once the middleware is in place, each route answers with `c.render()`:
+
+```tsx
+app.get("/about", (c) => c.render(<AboutPage />));
+```
+
+With a shell component, every call mounts your page inside it. Without one, the page renders bare. The shell also receives the Hono context `c` and the current layout, so nested layouts compose through `c.getLayout()`.
+
+Under the hood, a normal request renders to streaming HTML (`text/html`). A navigation request encodes the same tree as a component stream (`text/x-component`). Exact streaming options live in [hono-preact-progressive](/reference/hono/hono).
+
+## Branch the shell on navigation
+
+Navigation payloads must not include the document wrapper. A second `<html>` inside the payload breaks the swap, so check the request type in your shell:
+
+```tsx
+function Shell({ children }) {
+  const c = useRequestContext();
+  if (c.get("dataResponse")) return children;
+  return (
+    <html lang="en">
+      <body>
+        <Router>{children}</Router>
+      </body>
+    </html>
+  );
+}
+```
+
+That `dataResponse` flag is what `dynamicDataResponses()` sets. It looks for `text/x-component` in the `Accept` header (the header the [router](/learn/routing) sends) and adds `Vary: Accept` so caches keep the two representations apart.
+
+Render the `Router` inside the full document so first loads and navigations share one tree.
+
+## Read the request in components
+
+Any component rendered through `c.render()` can reach the current Hono context:
+
+```tsx
+import { useRequestContext } from "hono-preact-progressive";
+
+function Greeting() {
+  const c = useRequestContext();
+  const name = c.req.query("name") ?? "world";
+  return <h1>Hello, {name}</h1>;
+}
+```
+
+Use it for headers, params, and the `dataResponse` flag above. It throws outside the renderer provider, so only call it in routes rendered with `c.render()`.
+
+Next, make navigations instant with [Routing and Navigation](/learn/routing). For middleware signatures, see [hono-preact-progressive](/reference/hono/hono).

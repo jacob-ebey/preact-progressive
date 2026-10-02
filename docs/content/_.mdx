@@ -1,0 +1,194 @@
+import { Highlight } from "../src/components/highlight.tsx";
+
+<Highlight />
+
+# Getting Started
+
+You will get a running app in under a minute, then see how the pieces fit together.
+
+Preact Progressive renders on the server. Every request returns HTML. The browser hydrates only the parts you mark interactive with `use client` directives. The rest never ships.
+
+## Try it now
+
+The fastest way to feel that split is the starter template:
+
+```shell
+pnpm dlx degit jacob-ebey/preact-progressive-template
+cd preact-progressive-template
+pnpm i
+pnpm dev
+```
+
+Open the page. View Source. You will see full HTML with no bundle blocking first paint. That is the server doing its job.
+
+When you are ready to understand the model, work through the [Guide](/guide/01-server-components). Each step adds one idea: a server page, an island, props, an event, then streaming. Or keep reading here for manual setup.
+
+## Manual setup
+
+You only need four pieces: Preact for rendering, Vite for the build, Preact Progressive for the server and client runtime, and Hono for serving. Hono is optional but recommended because the docs assume its middleware.
+
+### 1. Install packages
+
+```shell
+pnpm i preact-progressive preact preact-render-to-string hono
+pnpm i -D vite
+```
+
+Asset wiring in this guide uses `@hiogawa/vite-plugin-fullstack`. Bring your own if you prefer:
+
+```shell
+pnpm i -D @hiogawa/vite-plugin-fullstack
+```
+
+### 2. Configure Vite with two environments
+
+Your app builds twice from the same source. The `client` environment builds the browser entry. The `ssr` environment builds the server entry. The Preact Progressive plugin connects the two so islands know which module to load.
+
+```ts
+import fullstack from "@hiogawa/vite-plugin-fullstack";
+import preact from "@preact/preset-vite";
+import preactProgressive from "preact-progressive/vite";
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  environments: {
+    client: {
+      build: {
+        manifest: true,
+        outDir: "./dist/client",
+        rolldownOptions: {
+          input: {
+            index: "./src/entry.client.ts",
+          },
+        },
+      },
+    },
+    ssr: {
+      build: {
+        outDir: "./dist/ssr",
+        emitAssets: true,
+        rolldownOptions: {
+          input: {
+            index: "./src/entry.server.tsx",
+          },
+        },
+      },
+    },
+  },
+  plugins: [preactProgressive(), preact(), fullstack()],
+});
+```
+
+### 3. Create your server entry
+
+This is where routes live. The `preactRenderer` wraps each page in your `Shell`. Your page stays a normal component.
+
+```tsx
+import { Hono } from "hono";
+import type { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
+import { preactRenderer, useRequestContext } from "preact-progressive/hono";
+import { Router } from "preact-progressive/router";
+
+import clientAssets from "./entry.client.ts?assets=client";
+import ssrAssets from "./entry.server.tsx?assets=ssr";
+
+const app = new Hono();
+app.use(preactRenderer(({ children }) => <Shell>{children}</Shell>));
+
+app.get("/", (c) => {
+  function Counter() {
+    "use client";
+    const [count, setCount] = useState(0);
+
+    return <button onClick={() => setCount((c) => c + 1)}>Count: {count}</button>;
+  }
+
+  return c.render(
+    <main>
+      <h1>Hello, World!</h1>
+      <Counter />
+    </main>,
+  );
+});
+
+export default app;
+
+const assets = clientAssets.merge(ssrAssets);
+
+function Shell({ children }: { children?: ComponentChildren }) {
+  const c = useRequestContext();
+  const skipShell = !!c.req.header("Accept")?.match(/\btext\/x-component\b/);
+
+  // Skip the shell on client navigations
+  if (skipShell) return children;
+
+  return (
+    <html lang="en">
+      <head>
+        {assets.css.map((f) => (
+          <link rel="stylesheet" href={f.href} />
+        ))}
+        <script async type="module" src={assets.entry}></script>
+      </head>
+      <body>
+        <Router>{children}</Router>
+      </body>
+    </html>
+  );
+}
+```
+
+Notice the two jobs in `Shell`. On a normal visit it returns the full document with the `Router` inside. On a client navigation (when the request asks for `text/x-component`) it returns only the page content. That branch is what makes link clicks fast without a reload. Read [Serving with Hono](/learn/hono) for the middleware version of the same idea.
+
+### 4. Create your client entry
+
+The client entry is one line. It finds islands the server rendered and hydrates them:
+
+```ts
+import { prgressiveHydrate } from "preact-progressive";
+
+prgressiveHydrate(document.documentElement);
+```
+
+### 5. Serve the build
+
+If you target Node, you can serve the built app with `@hono/node-server`:
+
+```shell
+pnpm i @hono/node-server
+```
+
+`server.ts`
+
+```ts
+import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
+import { compress } from "hono/compress";
+
+// @ts-ignore - dependent on build being ran
+import build from "./dist/ssr/index.js";
+
+const app = new Hono();
+app.use(compress());
+app.use(
+  serveStatic({
+    root: "docs/dist/client",
+    onFound(path, c) {
+      if (path.startsWith("/assets/")) {
+        c.header("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }),
+);
+app.route("", build);
+
+serve(app, (info) => {
+  console.log(`Listening at http://localhost:${info.port}`);
+});
+```
+
+## What to read next
+
+Now you have HTML on first load and islands that hydrate. To build intuition for each piece, read [Learn](/learn/overview) in order, or walk the [Guide](/guide/01-server-components) and watch each concept paint in the preview.

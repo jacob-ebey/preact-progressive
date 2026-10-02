@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "preact-progressive",
+  "compatibility_date": "2026-08-28",
+  "main": "./src/entry.server.tsx",
+}

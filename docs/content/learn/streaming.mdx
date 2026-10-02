@@ -1,0 +1,47 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Streaming and Suspense
+
+You will learn how HTML reaches the browser in pieces, how Suspense controls what shows first, and how promise props resolve in place.
+
+Streaming is built in. The server sends HTML as it renders, so the browser paints before the tree finishes. That early paint is not a placeholder trick. It is real content arriving early.
+
+## Show something now, swap in the rest later
+
+A Suspense boundary lets you decide what the browser sees while data is still loading. The server sends the fallback first, then replaces it with the real content once the awaited data arrives.
+
+Islands inside the boundary hydrate when their markup lands, not before. So put slow content behind a boundary and the rest of your page stays fast.
+
+Two cautions from Preact itself: do not remove the placeholder comments Suspense leaves in the HTML, and do not try to hydrate a boundary while it still shows its fallback. That handoff belongs to Preact. Touching it breaks the replacement.
+
+## Pass the promise itself when the browser should wait
+
+Sometimes you do not want the server to wait at all. You can pass a promise as a prop instead of awaiting it first.
+
+Passing a promise does not delay rendering. The client receives a real promise right away. The resolved value streams in afterwards as its own script chunk and settles the promise in place, even long after hydration. Settlements can arrive in any order. Neither side needs to coordinate timing.
+
+```tsx
+// Server: pass the promise, do not await it
+<ClientProfile name={fetchName()} />
+```
+
+```tsx
+// Client: read it with use()
+function ClientProfile({ name }) {
+  "use client";
+  const resolved = use(name);
+  return <p>Hello, {resolved}</p>;
+}
+```
+
+Hydration waits for promises that belong to the island being hydrated, so the island sees a consistent value. Everything else keeps painting around it.
+
+A promise that never settles simply never resolves its placeholder. On navigation responses it also keeps the response stream open. That is intentional. The stream stays alive until every promise settles.
+
+## Where to look next
+
+How the server spaces out those chunks is covered in [preact-progressive/server](/reference/preact-progressive/server). How the client plugs them in is covered in [preact-progressive/client](/reference/preact-progressive/client).
+
+To feel the difference, try the [Async Data](/guide/05-async-data) and [Promise Props](/guide/06-promise-props) steps in the Guide. You will watch fallback first paint, then the swap.

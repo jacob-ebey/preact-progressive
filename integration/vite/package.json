@@ -1,0 +1,35 @@
+{
+  "name": "@integration/vite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp build",
+    "dev": "vp dev",
+    "start": "node server.ts",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@hono/node-server": "catalog:",
+    "@integration/base": "workspace:*",
+    "hono": "catalog:",
+    "hono-preact-progressive": "workspace:",
+    "preact": "catalog:",
+    "preact-progressive": "workspace:",
+    "preact-render-to-string": "catalog:"
+  },
+  "devDependencies": {
+    "@hiogawa/vite-plugin-fullstack": "catalog:",
+    "@playwright/test": "catalog:",
+    "@preact/preset-vite": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tsconfig/vite-react": "catalog:",
+    "@types/node": "catalog:",
+    "playwright": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-preact-progressive": "workspace:",
+    "vite-plus": "catalog:"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "extends": ["@tsconfig/vite-react/tsconfig.json"],
+  "include": ["src", "playwright.config.ts", "playwright.dev.config.ts", "rsbuild.config.ts"],
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "types": ["@rsbuild/core/types", "node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

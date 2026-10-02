@@ -1,0 +1,81 @@
+packages:
+  - "docs"
+  - "integration/*"
+  - "packages/*"
+allowBuilds:
+  esbuild: false
+  workerd: false
+catalogMode: strict
+catalogPrune: true
+catalog:
+  "@babel/core": "^8.0.1"
+  "@babel/types": "^8.0.4"
+  "@changesets/changelog-github": ^1.0.0
+  "@changesets/cli": ^3.0.1
+  "@cloudflare/vite-plugin": "^1.54.2"
+  "@codemirror/autocomplete": "^6.20.3"
+  "@codemirror/commands": "^6.11.0"
+  "@codemirror/lang-html": "^6.4.12"
+  "@codemirror/lang-javascript": "^6.2.5"
+  "@codemirror/language": "^6.12.4"
+  "@codemirror/lint": "^6.9.7"
+  "@codemirror/state": "^6.7.1"
+  "@codemirror/view": "^6.43.9"
+  "@fsegurai/codemirror-theme-github-light": "^6.2.5"
+  "@fsegurai/codemirror-theme-github-dark": "^6.2.7"
+  "@hiogawa/vite-plugin-fullstack": "~0.0.11"
+  "@hono/node-server": "^2.1.1"
+  "@mdx-js/preact": "^3.1.1"
+  "@mdx-js/rollup": "^3.1.1"
+  "@playwright/test": "^1.62.1"
+  "@preact/preset-vite": "^2.10.6"
+  "@remix-run/fetch-router": ~0.22.0
+  "@remix-run/node-fetch-server": "~0.14.1"
+  "@rsbuild/core": "^2.2.2"
+  "@rsbuild/plugin-preact": "^2.1.0"
+  "@rsbuild/plugin-tailwindcss": ^2.0.3
+  "@rspack/core": ^2.2.2
+  "@stefanprobst/rehype-extract-toc": "^3.0.0"
+  "@tailwindcss/typography": "^0.5.20"
+  "@tailwindcss/vite": "^4.3.3"
+  "@tsconfig/node-ts": "^23.6.4"
+  "@tsconfig/node24": "^24.0.5"
+  "@tsconfig/vite-react": "^8.1.1"
+  "@types/estree": "^1.0.9"
+  "@types/node": "^24.13.3"
+  "@typescript/vfs": "^1.6.4"
+  "@valtown/codemirror-ts": "^2.3.1"
+  "babel-dead-code-elimination": "^2.0.0"
+  clsx: ^2.1.1
+  "comlink": "^4.4.2"
+  cross-env: ^10.1.0
+  "esbuild-wasm": "~0.28.2"
+  "hono": "^4.13.7"
+  "microlighter": "^2.1.0"
+  "oxfmt": "~0.66.0"
+  "oxlint": "^1.81.0"
+  pagefind: ^1.5.2
+  playwright: ^1.62.1
+  "preact": "11.0.0"
+  "preact-render-to-string": "^6.8.0"
+  "preact-root-fragment": "~0.3.1"
+  "rehype-slug": "^6.0.0"
+  "remark-flexible-toc": "^1.2.7"
+  remark-gfm: ^4.0.1
+  "tailwindcss": "^4.3.3"
+  "ts-js": "npm:typescript@5.9.3"
+  tsdoc-markdown: ^1.5.0
+  "typescript": "^7.0.2"
+  "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
+  "vite-plugin-devtools-json": "^1.1.0"
+  "vite-plus": "1.0.0"
+  "wrangler": "^4.127.1"
+overrides:
+  "@babel/core": "^8.0.1"
+  "@preact/preset-vite": "^2.10.6"
+  "preact": "^11.0.0"
+  "preact-render-to-string": "^6.8.0"
+  "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0"
+peerDependencyRules:
+  allowAny:
+    - vite

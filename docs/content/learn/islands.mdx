@@ -1,0 +1,39 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Islands
+
+You will learn what an island is, how islands hydrate, and how to size them well.
+
+An island is one interactive patch on an otherwise static page. The server renders its HTML like everything else. Then the browser hydrates just that patch so it can respond. The rest of the page stays static and ships no JavaScript.
+
+Picture a long article with two counters and a comment box. That page has three islands. Everything around them is plain HTML.
+
+## Only the outermost boundary becomes an island
+
+This part surprises people, so let us make it concrete.
+
+When the server renders a top level client component, that component becomes an island. Client components nested inside it render inline as part of the same island. You get one island per top level client component, not one per element.
+
+In practice this means: give each interactive area one top level client component. Do not scatter many tiny client components and expect each one to load on its own. Group what changes together.
+
+Server components used inside an island still run on the server. Only the HTML they produce travels to the browser. Their code never ships.
+
+## Islands hydrate on their own schedule
+
+Islands do not wait for each other. Each one hydrates as soon as its markup exists.
+
+That matters most when HTML arrives in pieces. An island that streams in after first paint hydrates on arrival. An island inside a Suspense fallback hydrates when its real content lands. You do not coordinate this. Preact Progressive does it for you.
+
+Under the hood, each island loads its JavaScript module and reads the props the server embedded next to its HTML. Then Preact attaches interactivity to the existing markup instead of rendering it again. There is no flash of empty UI.
+
+## Two rules that will save you debugging time
+
+First, islands only work inside a progressive render. That means `renderToProgressiveStream` or the Hono `preactRenderer`. If you render a client component anywhere else, it throws. That error is telling you the island has no stream to attach to.
+
+Second, an island payload is inert data. The browser reads it as values and never runs it as code. If you open View Source you will see markers and embedded data next to the HTML. You can ignore that shape in daily work. When you do need it, the server side is specified in [preact-progressive/server](/reference/preact-progressive/server) and the client side is in [preact-progressive/client](/reference/preact-progressive/client).
+
+## Where to go next
+
+Now that you know how islands wake up, learn what you can send them. Read [Props Across the Boundary](/learn/props).

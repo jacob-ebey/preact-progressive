@@ -1,0 +1,11 @@
+{
+  "extends": ["@tsconfig/node24/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
+  "include": ["src", "vite.config.ts"],
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "declaration": true,
+    "declarationMap": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@integration/rsbuild",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rsbuild build",
+    "dev": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" rsbuild dev",
+    "start": "node server.ts",
+    "test": "playwright test && playwright test --config playwright.dev.config.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "catalog:",
+    "@integration/base": "workspace:*",
+    "hono": "catalog:",
+    "hono-preact-progressive": "workspace:",
+    "preact": "catalog:",
+    "preact-progressive": "workspace:",
+    "preact-render-to-string": "catalog:"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@preact/preset-vite": "catalog:",
+    "@rsbuild/core": "catalog:",
+    "@rsbuild/plugin-preact": "catalog:",
+    "@rsbuild/plugin-tailwindcss": "catalog:",
+    "@tsconfig/vite-react": "catalog:",
+    "@types/node": "catalog:",
+    "cross-env": "catalog:",
+    "playwright": "catalog:",
+    "rsbuild-plugin-preact-progressive": "workspace:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

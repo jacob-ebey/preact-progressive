@@ -1,0 +1,11 @@
+{
+  "extends": ["@tsconfig/vite-react/tsconfig.json"],
+  "include": ["src", "prerender.ts", "vite.config.ts"],
+  "exclude": ["docs/guide"],
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "types": ["@hiogawa/vite-plugin-fullstack/types", "node", "vite-plus/client"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

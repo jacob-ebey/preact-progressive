@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@import "microlighter/themes/github.css" layer(utilities);
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer base {
+  :root {
+    --syntax-background: #fafafa;
+    --syntax-foreground: #24292f;
+    --syntax-comment: #6e7781;
+    --syntax-keyword: #cf222e;
+    --syntax-operator: #24292f;
+    --syntax-string: #0a3069;
+    --syntax-constant: #0550ae;
+    --syntax-function: #8250df;
+    --syntax-type: #8250df;
+    --syntax-variable: #953800;
+    --syntax-property: #0550ae;
+    --syntax-tag: #116329;
+    --syntax-selector: #8250df;
+    --syntax-inserted: #116329;
+    --syntax-deleted: #cf222e;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --syntax-background: #18181b;
+      --syntax-foreground: #e4e4e7;
+      --syntax-comment: #71717a;
+      --syntax-keyword: #c4b5fd;
+      --syntax-operator: #e4e4e7;
+      --syntax-string: #a5d6ff;
+      --syntax-constant: #93c5fd;
+      --syntax-function: #d8b4fe;
+      --syntax-type: #d8b4fe;
+      --syntax-variable: #fdba74;
+      --syntax-property: #93c5fd;
+      --syntax-tag: #86efac;
+      --syntax-selector: #d8b4fe;
+      --syntax-inserted: #86efac;
+      --syntax-deleted: #fca5a5;
+      color-scheme: dark;
+    }
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white font-sans text-zinc-800 antialiased dark:bg-zinc-950 dark:text-zinc-300;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-indigo-600/15 text-inherit dark:bg-indigo-400/25;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply scroll-mt-24 font-display tracking-tight text-balance;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-indigo-600 dark:outline-indigo-400;
+  }
+}
+
+/* Prose code blocks must use the syntax vars, not Typography defaults.
+   Typography ships a dark pre style with light text. We override only the
+   background here, which left light text on a light background. Binding both
+   to vars keeps plain text readable and follows prefers-color-scheme. */
+@layer utilities {
+  .prose pre:has(code) {
+    background-color: var(--syntax-background);
+    color: var(--syntax-foreground);
+  }
+  .prose pre:has(code) code {
+    background-color: transparent;
+    color: inherit;
+  }
+}
+
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(0 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@utility bg-grid-dark {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@utility mask-fade-y {
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
+/* CodeMirror floating UI lives outside the guide pane, so it needs explicit
+   dark styles: tooltips, autocomplete, hover docs, lint markers. */
+@layer components {
+  @media (prefers-color-scheme: dark) {
+    .cm-tooltip {
+      background-color: #18181b;
+      border-color: #27272a;
+      color: #e4e4e7;
+    }
+    .cm-tooltip-autocomplete > ul > li[aria-selected] {
+      background-color: #312e81;
+      color: #fff;
+    }
+    .cm-tooltip .cm-completionDetail {
+      color: #a1a1aa;
+    }
+    .cm-tooltip .cm-completionInfo {
+      background-color: #18181b;
+      border-color: #27272a;
+    }
+    .cm-diagnostic {
+      border-left-color: #52525b;
+    }
+    .cm-diagnostic-error {
+      border-left-color: #f87171;
+    }
+    .cm-diagnostic-warning {
+      border-left-color: #fbbf24;
+    }
+    .cm-lint-marker-error,
+    .cm-lint-marker-warning {
+      color: #f87171;
+    }
+    .cm-panel {
+      background-color: #09090b;
+      color: #e4e4e7;
+    }
+  }
+}

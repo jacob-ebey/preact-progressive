@@ -1,0 +1,57 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Events
+
+You will learn when a single event handler is enough, how captured values work, and how to choose between an event and an island.
+
+Some interactions need no island. If you attach a `"use client"` handler directly to a plain HTML element, like `onClick` on a `<button>`, Preact Progressive creates no island and runs no hydration. The server emits a small script after the element that attaches the listener. The element turns interactive as soon as that script runs.
+
+```tsx
+export function Page() {
+  function handleAlert() {
+    "use client";
+    alert("hello");
+  }
+  return <button onClick={handleAlert}>Alert</button>;
+}
+```
+
+This is the cheapest behavior you can add to a page. The page only records which file and function to call. The browser loads that file and calls the function when the event fires.
+
+## Capturing values from the server
+
+Handlers often need data that only exists on the server. You can capture it from the outer scope:
+
+```tsx
+export function ServerComponent({ message }) {
+  const handleClick = () => {
+    "use client";
+
+    alert(message);
+  };
+  return <button onClick={handleClick}>Do Alert</button>;
+}
+```
+
+Those captures are written directly into the listener script as plain JavaScript values. That keeps the script self contained, but it narrows what you can capture compared to island props.
+
+You can capture anything with a literal form: primitives, `Symbol.for()`, `Date`, `URL`, `RegExp`, `Map` and `Set`, binary views, arrays, and plain objects. You can also reference another `"use client"` function there. The browser loads it the same way when the event fires.
+
+These are rejected with an explicit error: non reference functions, promises, and circular values. If you need one of those, do not force it into an event. Pass it through a client component prop instead, where the full props format applies and promises resolve normally.
+
+Why so strict? If a capture had to be dropped, later arguments would shift left and the DOM event would land in the wrong parameter. Failing fast keeps your handler signature honest.
+
+## When to use which
+
+Ask what the interaction needs to remember.
+
+* If the element needs no state and no hydration, use an event. Buttons, logging, and alerts on server rendered markup are a good fit.
+* If the UI needs state, or props that only exist on the server, use an island. The island hydrates fully with Preact and accepts the full props format including promises.
+
+In cost terms: an event costs one listener script. An island costs an island wrapper with its data plus the module download. Start with the event. Reach for the island when the event cannot hold what you need.
+
+One more detail: this limit applies to standalone listeners only. When the same kind of handler lives inside a client component, its captured values travel with the island props and the full format applies.
+
+The emitted script shape is detailed in [preact-progressive/server](/reference/preact-progressive/server).

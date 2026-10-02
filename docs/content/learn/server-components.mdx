@@ -1,0 +1,52 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Server Components
+
+You will learn what a server component is, why it is the default, and what you can do inside one.
+
+Every component is a server component unless you tell Preact Progressive otherwise. It runs once on the server for each request. The browser receives the HTML it produced. No JavaScript ships for it.
+
+```tsx
+export function App() {
+  return (
+    <main>
+      <h1>Hello from the server</h1>
+      <p>This component ran once, on the server. The browser only received HTML.</p>
+    </main>
+  );
+}
+```
+
+Notice what is missing. There is no `use client` directive here. So by the time this reaches the browser, it is already finished HTML.
+
+## Why start here
+
+Starting on the server gives you three wins without asking for anything in return.
+
+Your HTML streams as it renders, so the browser starts painting before the whole tree finishes. Your content sits in the document itself, so search engines can read it without running code. And because there is no bundle to boot, there is no blank screen while the page wakes up.
+
+You get all of that by writing a normal component. You do not need to configure anything.
+
+## What you can do inside one
+
+Server components can touch server things directly. That is the point.
+
+You can read the current request with `useRequestContext()`. You can query your database. You can await a promise and pass the result down to the client. If it helps you render HTML, you can use it here.
+
+There are two limits to keep in mind.
+
+First, your output has to render to HTML. If Preact cannot render it, the server cannot send it.
+
+Second, anything that enters a client island has to travel across the network. Most values make the trip just fine, but a few do not. Database handles and open streams never leave the server. Resolve those first, then pass plain results down. Read [Props](/learn/props) for the full list of what survives the trip.
+
+## When you need interactivity
+
+A server component cannot hold state or listen for clicks. It ran once and it is done.
+
+When you want a part of the page to respond, mark that part with [`use client`](/learn/use-client). Each top level boundary becomes an [island](/learn/islands) that hydrates in the browser.
+
+A good rule of thumb: keep everything on the server until something needs to move. Then lift only that piece into a client boundary.
+
+Try it in the [Guide](/guide/01-server-components). You will render a server component and look at the raw HTML the browser receives.

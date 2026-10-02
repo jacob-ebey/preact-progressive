@@ -1,0 +1,54 @@
+{
+  "name": "rsbuild-plugin-preact-progressive",
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "Jacob Ebey <jacob.ebey@live.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacob-ebey/preact-progressive.git",
+    "directory": "packages/rsbuild-plugin"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./client": "./dist/client.mjs",
+    "./server": "./dist/server.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "docgen": "tsdoc --noemoji --types --src=src/rsbuild.ts --dest=./docs/rsbuild.md && tsdoc --noemoji --types --src=src/client.ts --dest=./docs/client.md && tsdoc --noemoji --types --src=src/server.ts --dest=./docs/server.md"
+  },
+  "dependencies": {
+    "@babel/core": "catalog:",
+    "@remix-run/node-fetch-server": "catalog:",
+    "babel-plugin-preact-progressive": "workspace:*"
+  },
+  "devDependencies": {
+    "@babel/types": "catalog:",
+    "@rsbuild/core": "catalog:",
+    "@rspack/core": "catalog:",
+    "@tsconfig/node-ts": "catalog:",
+    "@tsconfig/node24": "catalog:",
+    "@types/node": "catalog:",
+    "preact": "catalog:",
+    "tsdoc-markdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "@rsbuild/core": "*"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.3.4",
+      "onFail": "download"
+    }
+  }
+}

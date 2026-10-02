@@ -1,0 +1,73 @@
+import { Highlight } from "../../src/components/highlight.tsx";
+
+<Highlight />
+
+# Props Across the Boundary
+
+You will learn how data travels from a server component to a client island, what values survive the trip, and what to do instead when something cannot travel.
+
+A server component can render a client island and hand it data computed on the server. The server embeds those props in the page next to the island HTML. The browser reads them when it hydrates.
+
+```tsx
+import { useState } from "preact/hooks";
+
+export function App() {
+  return (
+    <main>
+      <h1>Props across the boundary</h1>
+      <Counter initial={5} />
+    </main>
+  );
+}
+
+function Counter({ initial }: { initial: number }) {
+  "use client";
+
+  const [count, setCount] = useState(initial);
+
+  return (
+    <button type="button" onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+Here `App` runs only on the server. `Counter` renders there once, then hydrates in the browser starting from `initial={5}`. You wrote it like normal props. The framework handled the trip.
+
+## What you can pass
+
+Think of this as richer than JSON. These values round trip intact:
+
+* Primitives: `string`, `number` (`NaN` and infinities round trip exactly, and `-0` stays negative), `boolean`, `null`, `undefined`, `bigint`.
+* `Symbol.for(key)`. A bare `Symbol()` throws because it has no shared key to look up.
+* `Date` (invalid dates stay invalid), `URL` with its href, `RegExp` with source and flags.
+* `Error`, redacted by default to a generic name and message with no stack. `cause` always serializes, so you still see why it failed.
+* Binary data: `ArrayBuffer`, typed arrays, and `DataView`. Bytes stay bytes.
+* `Map` and `Set`, including non string keys.
+* Arrays, where holes decode as `undefined`. Other iterables like generators and `arguments` travel as arrays.
+* Plain objects with enumerable string keyed entries. If an object defines `toJSON`, you get its result.
+* Promises, which arrive as real promises and settle later without another round trip. Read [Streaming and Suspense](/learn/streaming) for how that timing works.
+* Components and handlers behind a `use client` boundary, which reconnect to their browser code when the island hydrates.
+* Shared and cyclic values, where repeats and cycles come back as the same shared object.
+
+If you are passing database rows, fetch results, dates, maps, or binary blobs, you can usually pass them directly. Resolve handles and streams first, then pass the data.
+
+## What you cannot pass
+
+A few things cannot travel. They fail loudly so you notice during development:
+
+* Plain functions with no `use client` boundary. They throw. Move the function into a `"use client"` module, or pass plain data instead.
+* `ref`s on elements. They skip with a warning and reattach when the island hydrates. Do not rely on them for first paint.
+* Symbol keyed properties. They drop with a warning.
+* Server only resources like database handles and open streams. Resolve those on the server and pass the result.
+
+If you see one of these errors, the fix is almost always the same. Do more work on the server, then pass a smaller result to the client.
+
+## A note on scoped functions
+
+Scoped `"use client"` functions can capture outer values from the server scope. The client adds those captured values to the front of the props or call arguments. The same format rules apply, with one exception for events.
+
+The event path writes captures directly into the listener script as plain JavaScript values. That keeps the script self contained, but it means captures there must have a literal form. Promises, non reference functions, and cycles are rejected with an explicit error. This is intentional. Dropping an argument would shift later arguments left and land the DOM event in the wrong parameter. Pass promises through a client component prop instead, where they resolve normally. Read [Events](/learn/events) for the full comparison.
+
+The exact wire format is specified in [preact-progressive/encoder](/reference/preact-progressive/encoder). You rarely need it, but it is there when you want to see the bytes.
