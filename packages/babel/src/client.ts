@@ -29,13 +29,15 @@ function isWithinScope(scope: Scope, ancestor: Scope): boolean {
  * - A module-level `"use client"` keeps every export as-is and drops the
  *   directive. No `__pp_create_ref` helper is emitted; the module already
  *   *is* the implementation the server's reference token names.
- * - A scoped `"use client"` hoists the function to the top of the module
- *   (free variables become leading parameters, exactly as on the server) and
- *   exports the hoisted function, so the client chunk exposes the same
- *   export name the reference's `$name` points at. Server-only code around
- *   the definition site is treeshaken: unreachable top-level bindings, their
- *   imports, and side-effect statements referencing only removed bindings are
- *   dropped, with export roots driving reachability.
+  * - A scoped `"use client"` hoists the function to the top of the module
+  *   (free variables become leading parameters, exactly as on the server) and
+  *   exports the hoisted function, so the client chunk exposes the same
+  *   export name the reference's `$name` points at. Server-only code around
+  *   the definition site is treeshaken: unreachable top-level bindings, their
+  *   imports, and side-effect statements referencing only removed bindings are
+  *   dropped, with export roots driving reachability. Pre-existing exports are
+  *   stripped (helpers stay as unexported declarations), so a hoisted
+  *   function referencing an exported helper keeps its implementation.
  *
  * Like the server transform, demoted module-level directives (a plain
  * `"use client"` string statement left behind when another transform
@@ -241,17 +243,50 @@ export default function preactProgressiveClient(babel: PluginAPI): PluginObject 
           // Function-level transform
           // const referenced = findReferencedIdentifiers(path.parent as any);
           if (processFunctionLevel(path, st)) {
+            // Strip pre-existing exports so only hoisted functions remain
+            // exposed, but keep their declarations: a hoisted function may
+            // reference an exported helper (module-scope bindings stay direct
+            // references after hoisting), and treeshaking below must see that
+            // declaration to keep it reachable. Removing the export statement
+            // outright would leave the hoisted function dangling.
             for (let i = path.node.body.length - 1; i >= 0; i--) {
               const node = path.node.body[i];
-              if (
-                node.type !== "ImportDeclaration" &&
-                !toKeep.has(node) &&
-                node.type.startsWith("Export")
-              ) {
-                const toRemove = path.get("body").at(i);
-                toRemove?.remove();
+              if (node.type === "ImportDeclaration" || toKeep.has(node)) continue;
+              const stmtPath = path.get("body").at(i);
+              if (!stmtPath) continue;
+              if (stmtPath.isExportNamedDeclaration()) {
+                const declaration = stmtPath.node.declaration;
+                if (declaration) {
+                  // `export function f() {}` / `export const x = ...` ->
+                  // keep the declaration, drop the export.
+                  stmtPath.replaceWith(declaration);
+                } else {
+                  // `export { a, b as c }` / re-exports create no local
+                  // implementation: drop the specifier statement. Local
+                  // declarations survive as separate statements when a
+                  // hoisted function reaches them.
+                  stmtPath.remove();
+                }
+              } else if (stmtPath.isExportDefaultDeclaration()) {
+                const declaration = stmtPath.node.declaration;
+                if (
+                  (t.isFunctionDeclaration(declaration) || t.isClassDeclaration(declaration)) &&
+                  declaration.id
+                ) {
+                  // `export default function f() {}` -> keep `function f() {}`.
+                  stmtPath.replaceWith(declaration);
+                } else {
+                  // `export default <identifier|expression>` (named or
+                  // anonymous): the local declaration, if any, survives on
+                  // its own statement; the default export itself is
+                  // server-only surface.
+                  stmtPath.remove();
+                }
+              } else if (stmtPath.isExportAllDeclaration()) {
+                stmtPath.remove();
               }
             }
+            path.scope.crawl();
           }
           if (hasClientDirective) treeshakeCode(path);
           // deadCodeElimination(path.parent as any, referenced);
