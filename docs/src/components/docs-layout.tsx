@@ -49,7 +49,6 @@ export function Header({ sidebarButton }: { sidebarButton?: boolean }) {
             {[
               ["/", "Docs"],
               ["/guide/01-server-components", "Guide"],
-              ["/reference/preact-progressive/server", "Reference"],
             ].map(([href, label]) => (
               <a
                 key={href}

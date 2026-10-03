@@ -1,6 +1,6 @@
 import { CopyButton } from "./copy-button.tsx";
 
-const INSTALL = "pnpm dlx degit jacob-ebey/preact-progressive-template";
+const INSTALL = "pnpm dlx degit jacob-ebey/preact-progressive-template my-new-app";
 
 export function Hero() {
   return (

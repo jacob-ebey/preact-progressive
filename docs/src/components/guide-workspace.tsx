@@ -77,6 +77,7 @@ function Preview({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const onRenderedHtmlRef = useRef(onRenderedHtml);
   onRenderedHtmlRef.current = onRenderedHtml;
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -148,7 +149,7 @@ function Preview({
       });
 
     return () => controller.abort();
-  }, [code]);
+  }, [code, refreshKey]);
 
   return (
     <div class="flex h-72 shrink-0 flex-col lg:h-80">
@@ -178,7 +179,9 @@ function Preview({
         </div>
         <button
           type="button"
-          title="Refresh preview (coming soon)"
+          title="Refresh preview"
+          aria-label="Refresh preview"
+          onClick={() => setRefreshKey((k) => k + 1)}
           class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
         >
           <svg
@@ -201,7 +204,7 @@ function Preview({
       {/* Preview frame */}
       <iframe
         ref={iframeRef}
-        key={code}
+        key={`${refreshKey}:${code}`}
         title="Preview"
         class="min-h-0 w-full flex-1 bg-white lg:border-l lg:border-zinc-200 dark:bg-white dark:lg:border-zinc-800"
       ></iframe>
